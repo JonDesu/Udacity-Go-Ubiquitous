@@ -59,10 +59,10 @@ import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
 /**
- * Digital Sunshine watch face
+ * Digital Weather watch face
  */
-public class SunshineWatchFace extends CanvasWatchFaceService {
-    private static String TAG = SunshineWatchFace.class.getSimpleName();
+public class WeatherWatchFace extends CanvasWatchFaceService {
+    private static String TAG = WeatherWatchFace.class.getSimpleName();
 
     private static final Typeface NORMAL_TYPEFACE =
             Typeface.create(Typeface.SANS_SERIF, Typeface.NORMAL);
@@ -103,16 +103,13 @@ public class SunshineWatchFace extends CanvasWatchFaceService {
         final BroadcastReceiver mTimeZoneReceiver = new BroadcastReceiver() {
             @Override
             public void onReceive(Context context, Intent intent) {
-//                mTime.clear(intent.getStringExtra("time-zone"));
-//                mTime.setToNow();
-
                 mCalendar.setTimeZone(TimeZone.getDefault());
                 long now = System.currentTimeMillis();
                 mCalendar.setTimeInMillis(now);
             }
         };
 
-        GoogleApiClient mGoogleApiClient = new GoogleApiClient.Builder(SunshineWatchFace.this)
+        GoogleApiClient mGoogleApiClient = new GoogleApiClient.Builder(WeatherWatchFace.this)
                 .addConnectionCallbacks(this)
                 .addOnConnectionFailedListener(this)
                 .addApi(Wearable.API)
@@ -135,7 +132,6 @@ public class SunshineWatchFace extends CanvasWatchFaceService {
 
         boolean mAmbient;
 
-        //        Time mTime;
         private Calendar mCalendar;
 
         float mXOffsetTime;
@@ -161,12 +157,12 @@ public class SunshineWatchFace extends CanvasWatchFaceService {
         public void onCreate(SurfaceHolder holder) {
             super.onCreate(holder);
 
-            setWatchFaceStyle(new WatchFaceStyle.Builder(SunshineWatchFace.this)
+            setWatchFaceStyle(new WatchFaceStyle.Builder(WeatherWatchFace.this)
                     .setCardPeekMode(WatchFaceStyle.PEEK_MODE_SHORT)
                     .setBackgroundVisibility(WatchFaceStyle.BACKGROUND_VISIBILITY_INTERRUPTIVE)
                     .setShowSystemUiTime(false)
                     .build());
-            Resources resources = SunshineWatchFace.this.getResources();
+            Resources resources = WeatherWatchFace.this.getResources();
             mTimeYOffset = resources.getDimension(R.dimen.digital_time_y_offset);
             mDateYOffset = resources.getDimension(R.dimen.digital_date_y_offset);
             mDividerYOffset = resources.getDimension(R.dimen.digital_divider_y_offset);
@@ -190,7 +186,6 @@ public class SunshineWatchFace extends CanvasWatchFaceService {
             mTextTempLowPaint = createTextPaint(resources.getColor(R.color.primary_light));
             mTextTempLowAmbientPaint = createTextPaint(Color.WHITE);
 
-//            mTime = new Time();
             mCalendar = Calendar.getInstance();
         }
 
@@ -225,10 +220,6 @@ public class SunshineWatchFace extends CanvasWatchFaceService {
 
                 registerReceiver();
 
-                // Update time zone in case it changed while we weren't visible.
-//                mTime.clear(TimeZone.getDefault().getID());
-//                mTime.setToNow();
-
                 mCalendar.setTimeZone(TimeZone.getDefault());
                 long now = System.currentTimeMillis();
                 mCalendar.setTimeInMillis(now);
@@ -241,8 +232,6 @@ public class SunshineWatchFace extends CanvasWatchFaceService {
                 }
             }
 
-            // Whether the timer should be running depends on whether we're visible (as well as
-            // whether we're in ambient mode), so we may need to start or stop the timer.
             updateTimer();
         }
 
@@ -252,7 +241,7 @@ public class SunshineWatchFace extends CanvasWatchFaceService {
             }
             mRegisteredTimeZoneReceiver = true;
             IntentFilter filter = new IntentFilter(Intent.ACTION_TIMEZONE_CHANGED);
-            SunshineWatchFace.this.registerReceiver(mTimeZoneReceiver, filter);
+            WeatherWatchFace.this.registerReceiver(mTimeZoneReceiver, filter);
         }
 
         private void unregisterReceiver() {
@@ -260,7 +249,7 @@ public class SunshineWatchFace extends CanvasWatchFaceService {
                 return;
             }
             mRegisteredTimeZoneReceiver = false;
-            SunshineWatchFace.this.unregisterReceiver(mTimeZoneReceiver);
+            WeatherWatchFace.this.unregisterReceiver(mTimeZoneReceiver);
         }
 
         @Override
@@ -268,7 +257,7 @@ public class SunshineWatchFace extends CanvasWatchFaceService {
             super.onApplyWindowInsets(insets);
 
             // Load resources that have alternate values for round watches.
-            Resources resources = SunshineWatchFace.this.getResources();
+            Resources resources = WeatherWatchFace.this.getResources();
             boolean isRound = insets.isRound();
             mXOffsetTime = resources.getDimension(isRound
                     ? R.dimen.digital_time_x_offset_round : R.dimen.digital_time_x_offset);
@@ -319,25 +308,22 @@ public class SunshineWatchFace extends CanvasWatchFaceService {
                 invalidate();
             }
 
-            // Whether the timer should be running depends on whether we're visible (as well as
-            // whether we're in ambient mode), so we may need to start or stop the timer.
             updateTimer();
         }
 
         @Override
         public void onDraw(Canvas canvas, Rect bounds) {
-            // Draw the background.
+            // Draw background.
             if (mAmbient) {
                 canvas.drawColor(Color.BLACK);
             } else {
                 canvas.drawRect(0, 0, bounds.width(), bounds.height(), mBackgroundPaint);
             }
 
-            // Draw H:MM in ambient mode or H:MM:SS in interactive mode.
             long now = System.currentTimeMillis();
             mCalendar.setTimeInMillis(now);
 
-            boolean is24Hour = DateFormat.is24HourFormat(SunshineWatchFace.this);
+            boolean is24Hour = DateFormat.is24HourFormat(WeatherWatchFace.this);
 
             int minute = mCalendar.get(Calendar.MINUTE);
             int second = mCalendar.get(Calendar.SECOND);
@@ -355,7 +341,7 @@ public class SunshineWatchFace extends CanvasWatchFaceService {
                     hour = 12;
                 }
 
-                String amPmText = Utility.getAmPmString(getResources(), am_pm);
+                String amPmText = Helper.getAmPmString(getResources(), am_pm);
 
                 timeText = mAmbient
                         ? String.format("%d:%02d %s", hour, minute, amPmText)
@@ -503,7 +489,7 @@ public class SunshineWatchFace extends CanvasWatchFaceService {
         /**
          * Handle updating the time periodically in interactive mode.
          */
-        private void handleUpdateTimeMessage() {
+        private void interactiveTimerUpdate() {
             invalidate();
             if (shouldTimerBeRunning()) {
                 long timeMs = System.currentTimeMillis();
@@ -549,7 +535,7 @@ public class SunshineWatchFace extends CanvasWatchFaceService {
 
                         if (dataMap.containsKey(KEY_WEATHER_ID)) {
                             int weatherId = dataMap.getInt(KEY_WEATHER_ID);
-                            Drawable b = getResources().getDrawable(Utility.getIconResourceForWeatherCondition(weatherId));
+                            Drawable b = getResources().getDrawable(Helper.getIconResourceForWeatherCondition(weatherId));
                             Bitmap icon = ((BitmapDrawable) b).getBitmap();
                             float scaledWidth = (mTextTempHighPaint.getTextSize() / icon.getHeight()) * icon.getWidth();
                             mWeatherIcon = Bitmap.createScaledBitmap(icon, (int) scaledWidth, (int) mTextTempHighPaint.getTextSize(), true);
@@ -590,19 +576,19 @@ public class SunshineWatchFace extends CanvasWatchFaceService {
 
 
     private static class EngineHandler extends Handler {
-        private final WeakReference<SunshineWatchFace.Engine> mWeakReference;
+        private final WeakReference<WeatherWatchFace.Engine> mWeakReference;
 
-        public EngineHandler(SunshineWatchFace.Engine reference) {
+        public EngineHandler(WeatherWatchFace.Engine reference) {
             mWeakReference = new WeakReference<>(reference);
         }
 
         @Override
         public void handleMessage(Message msg) {
-            SunshineWatchFace.Engine engine = mWeakReference.get();
+            WeatherWatchFace.Engine engine = mWeakReference.get();
             if (engine != null) {
                 switch (msg.what) {
                     case MSG_UPDATE_TIME:
-                        engine.handleUpdateTimeMessage();
+                        engine.interactiveTimerUpdate();
                         break;
                 }
             }
